@@ -1,0 +1,17 @@
+_site/
+.sass-cache/
+.jekyll-cache/
+.ruby-version
+*.swp
+.jekyll-metadata
+images/generative_logo
+sync_site.bash
+
+assets/audio
+assets/doc
+assets/vue/nrt/data/map
+
+# Emacs backup and temp files.
+*~
+\#*\#
+.#*
