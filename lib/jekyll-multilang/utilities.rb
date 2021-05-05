@@ -33,7 +33,7 @@ module JekyllMultilang
       if "#{context[var]}" != ""
         rendered = "#{context[var]}"
       else
-        rendered = @lang_key
+        rendered = var
       end
       
       rendered
