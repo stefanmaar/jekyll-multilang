@@ -8,22 +8,16 @@ module JekyllMultilang
 
     def initialize(tag_name, passed_arguments, tokens)
       super
-      #@config = multilang_config
       arguments, options = split_arguments(passed_arguments)
       options = TagParser.new.parse(options)
-      #Jekyll.logger.info(log_topic, "init arguments: " + arguments.inspect)
-      #Jekyll.logger.info(log_topic, "init lang_key: " + @lang_key.inspect)
-      #Jekyll.logger.info(log_topic, "options: " + options.inspect)
+      Jekyll.logger.debug(log_topic, "init arguments: " + arguments.inspect)
+      Jekyll.logger.debug(log_topic, "init lang_key: " + @lang_key.inspect)
+      Jekyll.logger.debug(log_topic, "options: " + options.inspect)
       @lang_key = arguments[0]
       @lang = options.lang
-      #Jekyll.logger.info(log_topic, "init lang_key: " + @lang_key.inspect)
     end
 
     def render(context)
-      #Jekyll.logger.info(log_topic, "processing page: " + context['page']['title'])
-      #Jekyll.logger.info(log_topic, "lang_key: " + @lang_key.inspect)
-      #Jekyll.logger.info(log_topic, "context_lang_key: " + "#{context[@lang_key.strip]}")
-
       # Parse the language key.
       lang_key = get_page_variable(@lang_key, context)
       lang_key = render_variable(lang_key, context)
@@ -31,7 +25,7 @@ module JekyllMultilang
       lang ||= MLCore.default_lang
 
       translation = MLCore.parsed_translation[lang].access(lang_key) if lang_key.is_a?(String)
-      Jekyll.logger.info(log_topic, "lang_key: " + lang_key + "; translation: " + translation.inspect)
+      Jekyll.logger.debug(log_topic, "lang_key: " + lang_key + "; translation: " + translation.inspect)
 
       if translation.nil? or translation.empty?
         translation = MLCore.parsed_translation[lang].access(lang_key) || '???'
