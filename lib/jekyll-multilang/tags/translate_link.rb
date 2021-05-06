@@ -17,7 +17,7 @@ module JekyllMultilang
     end
 
     def render(context)
-      Jekyll.logger.debug(log_topic, "Translating Link")
+      Jekyll.logger.debug(log_topic, "Translating Link.")
       
       # Parse the namespace.
       namespace = get_page_variable(@namespace, context)
@@ -25,6 +25,7 @@ module JekyllMultilang
 
       # Get the page title.
       page_url = context['page']['url']
+      Jekyll.logger.debug(log_topic, "page_url: " + page_url.inspect)
 
       # Get site spcecific data.
       site = context.registers[:site]
@@ -38,21 +39,20 @@ module JekyllMultilang
       if @lang.nil?
         lang = context['page']['lang']
       else
-        lang = default_lang
+        lang = @lang
       end
+      Jekyll.logger.debug(log_topic, "lang: " + lang.inspect)
 
       # Get the permalink for the requested namespace and language.
-      default_permalink = site_namespace.dig(namespace, default_lang, 'permalink') || context['page']['permalink'] || context['page']['url']
+      #default_permalink = site_namespace.dig(namespace, default_lang, 'permalink')
       permalink = site_namespace.dig(namespace, lang, 'permalink')
       if permalink.nil?
-        Jekyll.logger.warn(log_topic, "TranslateLink - Page #{page_url}. No namespace for #{namespace} and language #{lang}. Using a fallback link....")
+        Jekyll.logger.warn(log_topic, "TranslateLink - Page #{page_url}. No namespace for #{namespace} and language #{lang}. Returning NIL....")
         Jekyll.logger.debug(log_topic, "site namespace: " + site_namespace[namespace].inspect)
-        permalink = default_permalink
       end
-      
-      url = site.baseurl + permalink
-      Jekyll.logger.debug(log_topic, "translated url: " + url.inspect)
-      url
+
+      Jekyll.logger.debug(log_topic, "translated permalink: " + permalink.inspect)
+      permalink
     end
   end
 
