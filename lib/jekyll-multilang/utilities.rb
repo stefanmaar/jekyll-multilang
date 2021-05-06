@@ -28,7 +28,7 @@ module JekyllMultilang
     end
 
 
-    # Get page variables from the context.
+    # Get page variables from the context using a variable string.
     def get_page_variable(var, context)
       if "#{context[var]}" != ""
         rendered = "#{context[var]}"
