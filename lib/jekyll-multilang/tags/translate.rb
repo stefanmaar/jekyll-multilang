@@ -22,13 +22,18 @@ module JekyllMultilang
       lang_key = get_page_variable(@lang_key, context)
       lang_key = render_variable(lang_key, context)
       
-      lang ||= MLCore.default_lang
+      # Use the page language if not specified.
+      if @lang.nil?
+        lang = context['page']['lang']
+      else
+        lang = @lang
+      end
 
       translation = MLCore.parsed_translation[lang].access(lang_key) if lang_key.is_a?(String)
-      Jekyll.logger.debug(log_topic, "lang_key: " + lang_key + "; translation: " + translation.inspect)
+      Jekyll.logger.debug(log_topic, "lang: " + lang + "; lang_key: " + lang_key + "; translation: " + translation.inspect)
 
       if translation.nil? or translation.empty?
-        translation = MLCore.parsed_translation[lang].access(lang_key) || '???'
+        translation = MLCore.parsed_translation[MLCore.default_lang].access(lang_key) || '???'
         Jekyll.logger.error(log_topic, "Missing i18n key: #{lang}: #{lang_key}. Tried to use the translation of the default language.")
       end
       

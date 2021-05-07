@@ -57,8 +57,13 @@ Jekyll::Hooks.register :site, :post_read do |site|
   # Customize the pages.
   Jekyll.logger.info(log_topic, "Customizing the pages.")
   site.pages.each do |page|
-    Jekyll.logger.debug(log_topic, "local variables: " + page.instance_variables.inspect)
+    Jekyll.logger.debug(log_topic, "title: #{page.data['title']}")
+
+    # Get the page language.
     lang = page.data['lang']
+
+    Jekyll.logger.debug(log_topic, "lang: #{lang}")
+                        
    
     # Set the permalink of the page. This is used by the page when creating the
     # page url.
@@ -70,10 +75,27 @@ Jekyll::Hooks.register :site, :post_read do |site|
     # page.url methode before this point. Try to find a better solution.
     #
     if !page.data['lang'].nil?
-      page.data['ml_permalink'] = page.data['permalink']
-      unless lang == MLCore.default_lang
-        page.data['permalink'] = "/#{lang}" + page.data['permalink']
+      # Create the post permalink and url including the language directory.
+      ml_permalink = Jekyll::URL.new(
+        :template => page.template,
+        :placeholders => page.url_placeholders,
+        :permalink => page.data['permalink']
+      ).to_s
+      # Without a specified permalink, the page permalink ist built using the path
+      # and the basename including the language directory.
+      # Remove the language from the permalink.
+      if ml_permalink.start_with? ("/#{lang}")
+        ml_permalink = ml_permalink.sub("/#{lang}", "") 
       end
+
+      # Set the page permalink data.
+      page.data['ml_permalink'] = ml_permalink
+      lang_permalink = "/#{lang}" + ml_permalink
+      if lang == MLCore.default_lang
+        page.data['permalink'] = ml_permalink
+      else
+        page.data['permalink'] = lang_permalink
+      end      
     end
 
     # Extract the namespace information.
@@ -85,59 +107,72 @@ Jekyll::Hooks.register :site, :post_read do |site|
       end
     end
 
-    Jekyll.logger.debug(log_topic, "permalink: " + page.permalink.inspect)
-    Jekyll.logger.debug(log_topic, "url after permalink: " + page.url)
+    Jekyll.logger.info(log_topic, "ml_permalink: " + page.data['ml_permalink'].inspect)
+    Jekyll.logger.info(log_topic, "permalink: " + page.permalink.inspect)
+    Jekyll.logger.info(log_topic, "url after permalink: " + page.url)
 
   end
 
-  # Customize the posts.
-  Jekyll.logger.info(log_topic, "Customizing the posts.")
-  site.posts.docs.each do |post|
-    # Get the post language.
-    lang = post.data['lang']
-    
-    # Remove the language from the categories.
-    post.data['categories'].delete(post.data['lang'])
-    
-    # Add the post date to the given namespace to make sure, that it is unique.
-    post_date_slug = post.data['date'].strftime("%Y%m%d")
-    post_namespace = post.data['namespace'] || post.data['slug']
-    post.data['namespace'] = post_date_slug + '_' + post_namespace
+  # Customize the collections.
+  Jekyll.logger.debug(log_topic, "collections: " + site.collections.inspect)
+  site.collections.each do |col_name, col|
+    Jekyll.logger.info(log_topic, "Customizing the collection #{col_name}.")
 
-    # Create the post permalink and url including the language directory.
-    ml_permalink = Jekyll::URL.new(
-      :template => post.url_template,
-      :placeholders => post.url_placeholders
-    ).to_s
-    post.data['ml_permalink'] = ml_permalink
-    lang_permalink = "/#{lang}" + ml_permalink
-    if lang == MLCore.default_lang
-      post.data['permalink'] = ml_permalink
-    else
-      post.data['permalink'] = lang_permalink
+    col.docs.each do |doc|
+      # Get the document language.
+      lang = doc.data['lang']
+      
+      # Remove the language from the categories.
+      doc.data['categories'].delete(lang)
+
+      if col_name == 'posts'
+        # Add the post date to the given namespace to make sure, that it is unique.
+        post_date_slug = doc.data['date'].strftime("%Y%m%d")
+        post_namespace = doc.data['namespace'] || doc.data['slug']
+        doc.data['namespace'] = col_name + '_' + post_date_slug + '_' + post_namespace
+      else
+        doc.data['namespace'] = col_name + '_' + post_namespace
+      end
+
+      # Create the post permalink and url including the language directory.
+      ml_permalink = Jekyll::URL.new(
+        :template => doc.url_template,
+        :placeholders => doc.url_placeholders
+      ).to_s
+      doc.data['ml_permalink'] = ml_permalink
+      lang_permalink = "/#{lang}" + ml_permalink
+      if lang == MLCore.default_lang
+        doc.data['permalink'] = ml_permalink
+      else
+        doc.data['permalink'] = lang_permalink
+      end
+
+      # Save the post namespace data in the namespace hash.
+      if namespace.has_key? doc.data['namespace']
+        namespace[doc.data['namespace']][lang] = {'permalink' => doc.data['permalink']}
+      else
+        namespace[doc.data['namespace']] = {lang => {'permalink' => doc.data['permalink']}}
+      end
+
+      Jekyll.logger.debug(log_topic, "doc: " + doc.inspect)
+      Jekyll.logger.debug(log_topic, "local variables: " + doc.instance_variables.inspect)
+      Jekyll.logger.debug(log_topic, "doc.data: " + doc.data.inspect)
+      Jekyll.logger.debug(log_topic, "permalink: " + doc.permalink.inspect)
+      Jekyll.logger.debug(log_topic, "url: " + doc.url)
     end
-
-    # Save the post namespace data in the namespace hash.
-    if namespace.has_key? post.data['namespace']
-      namespace[post.data['namespace']][lang] = {'permalink' => post.data['permalink']}
-    else
-      namespace[post.data['namespace']] = {lang => {'permalink' => post.data['permalink']}}
-    end
-
-    Jekyll.logger.debug(log_topic, "post: " + post.inspect)
-    Jekyll.logger.debug(log_topic, "local variables: " + post.instance_variables.inspect)
-    Jekyll.logger.debug(log_topic, "post.data: " + post.data.inspect)
-    Jekyll.logger.debug(log_topic, "permalink: " + post.permalink.inspect)
-    Jekyll.logger.debug(log_topic, "url: " + post.url)
   end
 
   # Save the namespace in the site data hash.
   Jekyll.logger.debug(log_topic, "namespace: " + namespace.inspect)
   site.data['namespace'] = namespace
 
-  # Created a hash of posts grouped by their language.
+  # Created a hash of documents grouped by their language.
   site.data['ml_posts'] = Hash.new
+  site.data['ml_pages'] = Hash.new
   MLCore.config['languages'].each do |lang|
     site.data['ml_posts'][lang] = site.posts.docs.select {|post| post.data['lang'] == lang}
+    site.data['ml_pages'][lang] = site.pages.select {|page| page.data['lang'] == lang}
   end
+
+  Jekyll.logger.info(log_topic, "ml_pages: #{site.data['ml_pages'].inspect}")
 end
