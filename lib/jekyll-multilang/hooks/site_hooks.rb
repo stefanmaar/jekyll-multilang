@@ -171,8 +171,7 @@ Jekyll::Hooks.register :site, :post_read do |site|
   site.data['ml_pages'] = Hash.new
   MLCore.config['languages'].each do |lang|
     site.data['ml_posts'][lang] = site.posts.docs.select {|post| post.data['lang'] == lang}
+    site.data['ml_posts'][lang] = site.data['ml_posts'][lang].sort_by {|post| post.date}.reverse
     site.data['ml_pages'][lang] = site.pages.select {|page| page.data['lang'] == lang}
   end
-
-  Jekyll.logger.info(log_topic, "ml_pages: #{site.data['ml_pages'].inspect}")
 end
