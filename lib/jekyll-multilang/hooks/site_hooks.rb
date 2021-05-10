@@ -129,9 +129,9 @@ Jekyll::Hooks.register :site, :post_read do |site|
         # Add the post date to the given namespace to make sure, that it is unique.
         post_date_slug = doc.data['date'].strftime("%Y%m%d")
         post_namespace = doc.data['namespace'] || doc.data['slug']
-        doc.data['namespace'] = col_name + '_' + post_date_slug + '_' + post_namespace
+        doc.data['namespace'] = col_name + '-' + post_date_slug + '-' + post_namespace
       else
-        doc.data['namespace'] = col_name + '_' + post_namespace
+        doc.data['namespace'] = col_name + '-' + post_namespace
       end
 
       # Create the post permalink and url including the language directory.
