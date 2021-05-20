@@ -34,7 +34,9 @@ Jekyll::Hooks.register :site, :after_init do |site|
   languages = site.config['multilang']['languages']
   languages.each do |lang|
     # Inject the page language using the site defaults.
-    site.config['defaults'].append({"scope"=>{"path"=>lang}, "values"=>{"lang"=>lang}})
+    # Also inject the locale variable with the lang data. The locale can be used
+    # by jekyll-paginate-v2 for language filtering.
+    site.config['defaults'].append({"scope"=>{"path"=>lang}, "values"=>{"lang"=>lang, "locale"=>lang}})
     
     # Load the translation files.
     Jekyll.logger.info(log_topic, "Loading translation from file #{site.source}/_i18n/#{lang}.yml")
@@ -42,6 +44,22 @@ Jekyll::Hooks.register :site, :after_init do |site|
     Jekyll.logger.debug(log_topic, "parsed_translations: " + MLCore.parsed_translation.inspect)
   end
   
+end
+
+
+Jekyll::Hooks.register :site, :after_reset do |site|
+  # Initialize the plugin.
+  include JekyllMultilang::Utilities
+  include JekyllMultilang::Core
+
+  Jekyll.logger.info "JekyllMultilang:", "Site reset: :site:after_reset hook."
+  # Load the translation data
+  languages = site.config['multilang']['languages']
+  languages.each do |lang|
+    # Load the translation files.
+    Jekyll.logger.info(log_topic, "Loading translation from file #{site.source}/_i18n/#{lang}.yml")
+    MLCore.parsed_translation[lang] = YAML.load_file("#{site.source}/_i18n/#{lang}.yml")
+  end
 end
 
 
