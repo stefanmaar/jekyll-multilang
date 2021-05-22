@@ -191,5 +191,22 @@ Jekyll::Hooks.register :site, :post_read do |site|
     site.data['ml_posts'][lang] = site.posts.docs.select {|post| post.data['lang'] == lang}
     site.data['ml_posts'][lang] = site.data['ml_posts'][lang].sort_by {|post| post.date}.reverse
     site.data['ml_pages'][lang] = site.pages.select {|page| page.data['lang'] == lang}
+
+    # Set the next and previous posts for the language groups.
+    site.data['ml_posts'][lang].each_with_index do |cur_post, k|
+      if k == 0
+        cur_post.data['ml_previous'] = nil
+      else
+        cur_post.data['ml_previous'] = site.data['ml_posts'][lang][k-1]
+      end
+
+      if k == (site.data['ml_posts'][lang].length() - 1)
+        cur_post.data['ml_next'] = nil
+      else
+        cur_post.data['ml_next'] = site.data['ml_posts'][lang][k+1]
+      end
+    end
   end
+
+  
 end
