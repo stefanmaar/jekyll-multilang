@@ -21,6 +21,7 @@ module JekyllMultilang
       
       # Parse the namespace.
       namespace = get_page_variable(@namespace, context)
+      Jekyll.logger.debug(log_topic, "post namespace: " + namespace) 
       namespace = render_variable(namespace, context)
 
       # Get the page title.

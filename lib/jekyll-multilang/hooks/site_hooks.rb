@@ -35,6 +35,7 @@ Jekyll::Hooks.register :site, :after_init do |site|
   languages.each do |lang|
     # Inject the page language using the site defaults.
     site.config['defaults'].append({"scope"=>{"path"=>lang}, "values"=>{"lang"=>lang}})
+    site.config['defaults'].append({"scope"=>{"path"=>lang}, "values"=>{"locale"=>lang}})
     
     # Load the translation files.
     Jekyll.logger.info(log_topic, "Loading translation from file #{site.source}/_i18n/#{lang}.yml")
@@ -129,9 +130,9 @@ Jekyll::Hooks.register :site, :post_read do |site|
         # Add the post date to the given namespace to make sure, that it is unique.
         post_date_slug = doc.data['date'].strftime("%Y%m%d")
         post_namespace = doc.data['namespace'] || doc.data['slug']
-        doc.data['namespace'] = col_name + '_' + post_date_slug + '_' + post_namespace
+        doc.data['namespace'] = col_name + '-' + post_date_slug + '-' + post_namespace
       else
-        doc.data['namespace'] = col_name + '_' + post_namespace
+        doc.data['namespace'] = col_name + '-' + post_namespace
       end
 
       # Create the post permalink and url including the language directory.
