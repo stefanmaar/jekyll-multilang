@@ -180,11 +180,12 @@ Jekyll::Hooks.register :site, :post_read do |site|
     end
   end
 
-  # Save the namespace in the site data hash.
-  Jekyll.logger.debug(log_topic, "namespace: " + namespace.inspect)
-  site.data['namespace'] = namespace
-
   # Created a hash of documents grouped by their language.
+  site.data['ml'] = Hash.new
+  MLCore.config['languages'].each do |lang|
+    site.data['ml'][lang] = Hash.new
+  end
+    
   site.data['ml_posts'] = Hash.new
   site.data['ml_pages'] = Hash.new
   MLCore.config['languages'].each do |lang|
@@ -208,5 +209,66 @@ Jekyll::Hooks.register :site, :post_read do |site|
     end
   end
 
-  
+  # Scanning for language specific collections.
+  MLCore.config['languages'].each do |lang|
+    Jekyll.logger.info(log_topic, "Scanning for collections in language folder #{site.source}/#{lang}")
+    site.data['ml'][lang]['collections'] = Hash.new
+    col_dirs = Dir.glob("#{site.source}/#{lang}/**/_*")
+    col_dirs.each do |cur_dir|
+      col_name = File.basename(cur_dir)[1..-1]
+      cur_collection = Array.new
+      col_files = Dir.glob("#{cur_dir}/**/*.md")
+      col_files.each do |cur_file|
+        Jekyll.logger.debug(File.basename(cur_file))
+        filename = File.basename(cur_file)
+        rel_dir = Pathname.new(File.dirname(cur_file)).relative_path_from(Pathname.new(site.source)).to_s
+        cur_page = Jekyll::Page.new(site, site.source, rel_dir, filename)
+        
+        # Create the page permalink and url including the language directory.
+        ml_permalink = Jekyll::URL.new(
+          :template => cur_page.template,
+          :placeholders => cur_page.url_placeholders,
+          :permalink => cur_page.data['permalink']
+        ).to_s
+        # Without a specified permalink, the page permalink ist built using the path
+        # and the basename including the language directory.
+        # Remove the language from the permalink.
+        if ml_permalink.start_with? ("/#{lang}")
+          ml_permalink = ml_permalink.sub("/#{lang}", "") 
+        end
+        # Add the collection name to the permalink.
+        ml_permalink = "/#{col_name}" + ml_permalink
+        
+        # Set the permalink depending on the default language.
+        cur_page.data['ml_permalink'] =  ml_permalink
+        lang_permalink = "/#{lang}" + ml_permalink
+        if lang == MLCore.default_lang
+          cur_page.data['permalink'] = ml_permalink
+        else
+          cur_page.data['permalink'] = lang_permalink
+        end
+
+        # Add the collection name to the page data.
+        cur_page.data['ml_collection'] = col_name
+
+        # Extract the namespace information.
+        if cur_page.data.has_key? 'namespace'
+          if namespace.has_key? cur_page.data['namespace']
+            namespace[cur_page.data['namespace']][lang] = {'permalink' => cur_page.data['permalink']}
+          else
+            namespace[cur_page.data['namespace']] = {lang => {'permalink' => cur_page.data['permalink']}}
+          end
+        end
+    
+        cur_collection.append(cur_page)
+        site.pages << cur_page
+      end
+      site.data['ml'][lang]['collections'][col_name] = cur_collection
+    end
+  end
+  Jekyll.logger.debug(log_topic, "site.data['ml']:" + site.data['ml'].inspect)
+
+  # Save the namespace in the site data hash.
+  Jekyll.logger.debug(log_topic, "namespace: " + namespace.inspect)
+  site.data['namespace'] = namespace
 end
