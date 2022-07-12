@@ -223,6 +223,10 @@ Jekyll::Hooks.register :site, :post_read do |site|
         filename = File.basename(cur_file)
         rel_dir = Pathname.new(File.dirname(cur_file)).relative_path_from(Pathname.new(site.source)).to_s
         cur_page = Jekyll::Page.new(site, site.source, rel_dir, filename)
+
+        Jekyll.logger.debug(cur_page.data.inspect)
+        # Create the slug, it is not created by default.
+        cur_page.data['slug'] = Jekyll::Utils.slugify(cur_page.data['title'])
         
         # Create the page permalink and url including the language directory.
         ml_permalink = Jekyll::URL.new(
