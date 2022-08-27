@@ -252,6 +252,9 @@ Jekyll::Hooks.register :site, :post_read do |site|
           cur_page.data['permalink'] = lang_permalink
         end
 
+        # Set the page date to the site date.
+        cur_page.data['date'] = site.time
+        
         # Add the collection name to the page data.
         cur_page.data['ml_collection'] = col_name
 
