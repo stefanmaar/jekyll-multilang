@@ -29,6 +29,7 @@ module JekyllMultilang
         lang = @lang
       end
 
+      Jekyll.logger.debug(log_topic, "lang: " + lang + "; lang_key: " + lang_key)
       translation = MLCore.parsed_translation[lang].access(lang_key) if lang_key.is_a?(String)
       Jekyll.logger.debug(log_topic, "lang: " + lang + "; lang_key: " + lang_key + "; translation: " + translation.inspect)
 
